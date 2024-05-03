@@ -175,9 +175,9 @@ function drawChord() {
 }
 
 function drawLine(pos1, pos2, interval) {
-	ctx.lineWidth = 2
-	//ctx.strokeStyle = intervalColors[interval]
-	ctx.strokeStyle = "white"
+	ctx.lineWidth = 1.5
+	ctx.strokeStyle = intervalColors[interval]
+	// ctx.strokeStyle = "white"
 	ctx.beginPath()
 	ctx.moveTo(pos1[0], pos1[1])
 	ctx.lineTo(pos2[0], pos2[1])
