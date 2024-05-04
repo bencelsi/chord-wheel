@@ -6,6 +6,7 @@
 	<link rel="icon" href='favicon.ico'>
 	<style>
 		body { background-color: hsl(0, 0%, 0%); }
+
 	</style>
 </head>
 <body>
@@ -14,10 +15,13 @@
 	</div>
 <script>
 
-//TODO: make each note octave 'doubled', shepard tonable
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-let canvas = document.getElementById("canvas");
-let ctx = canvas.getContext("2d");
+const DOT_SIZE = 23
+const RADIUS = 175
+const CENTER = [400, 400]
+
 const SPACE_CODE = 32
 const TET = 12
 const notes = ['A', 'Bflat', 'B', 'C', "Csharp", 'D', 'Eflat','E', 'F', "Fsharp", 'G', 'Aflat']
@@ -28,22 +32,29 @@ let currentChord = 0;
 
 // organize into meaningful 'progression', can change root
 const chords = {
-	'Am':		[0, 3, 7],		// Minor
-	'A∫':		[0, 5, 7],		// Suspended
-	'A':		[0, 4, 7], 		// Major
-	'Ab5':		[0, 4, 6],		// Flat Five
-	'Aº':		[0, 3, 6],		// Diminished
-	'A+':		[0, 4, 8],		// Augmented
+	"Minor":			[0, 3, 7],			// Minor		// 
+	'Suspended':		[0, 5, 7],		// Suspended		
+	'Major':			[0, 4, 7], 		// Major			// Stunted
+	//'Flat Five':		[0, 4, 6],		// Flat Five		// Stunted
+	'Diminished':		[0, 3, 6],		// Diminished		// 
+	'Augmented+':		[0, 4, 8],		// Augmented		// 
 	// 4 note
-	'A7':		[0, 4, 7, 10],	// Dominant Seventh
-	'Am7':		[0, 3, 7, 10],	// Minor Seventh
-	'A∆7':		[0, 4, 7, 11],	// Major Seventh
-	'Am6':		[0, 3, 7, 9],	// Minor Sixth
-	'A7∫4':		[0, 5, 7, 9],	// Seventh Suspended Fourth
-	'Aº7': 		[0, 3, 6, 9],	// Diminished Seventh
-	'Am∆7':		[0, 3, 7, 11], 	// Minor Major Seventh
-	'Aµ':		[0, 2, 4, 7]	// Mu
+	'Dominant Seventh':		[0, 4, 7, 10],	// Dominant Seventh		// 
+	'Minor Seventh':		[0, 3, 7, 10],	// Minor Seventh		// Relaxed
+	'Major Seventh':		[0, 4, 7, 11],	// Major Seventh
+	'Minor Sixth':			[0, 3, 7, 9],	// Minor Sixth			// 
+	'Suspended Seventh':	[0, 5, 7, 9],	// 				
+	'Diminished Seventh': 	[0, 3, 6, 9],	// Diminished Seventh	
+	'Minor Major Seventh':	[0, 3, 7, 11], 	// Minor Major Seventh
+	'Mu':					[0, 2, 4, 7]	// Mu
 }
+
+// Extruded Contorted Embellished Elevated 
+// Disfigured
+// Embodied
+// Reflected
+
+
 
 let intervalColors = [
 	'red',
@@ -54,19 +65,28 @@ let intervalColors = [
 	'yellow',	// tritone
 ]
 
+intervalColors2 = [
+	`hsl(0,  100%, 50%)`, // orange
+	`hsl(25, 100%, 50%)`, // orange
+	`hsl(40, 100%, 50%)`, // orange-yellow
+	`hsl(50, 100%, 50%)`, // yellow
+	`hsl(60, 100%, 75%)`, // light yellow
+	"white"
+]
+
 let noteColors = [
 	`hsl(0, 100%, 50%)`, // red
-	`hsl(15, 100%, 50%)`, // red-orange
-	`hsl(30, 100%, 50%)`, // orange
+	`hsl(25, 100%, 50%)`, // orange-red
 	`hsl(45, 100%, 50%)`, // orange-yellow
 	`hsl(60, 100%, 50%)`, // yellow
 	`hsl(90, 100%, 50%)`, // yellow-green
-	`hsl(120, 100%, 50%)`, // green
-	`hsl(180, 100%, 50%)`, // blue-green
+	`hsl(130, 100%, 35%)`, // green
+	`hsl(165, 100%, 35%)`, // green-blue
+	`hsl(205, 100%, 40%)`, // blue-green
 	`hsl(240, 100%, 50%)`, // blue
 	`hsl(260, 100%, 50%)`, // blue-purple
 	`hsl(280, 100%, 50%)`, // purple
-	`hsl(315, 100%, 50%)`, // purple-red
+	`hsl(320, 100%, 50%)`, // purple-red
 ]
 
 let audios = []
@@ -123,7 +143,7 @@ function checkClick(point) {
 		return -1
 	}
 	for (let i = 0; i < TET; i++) {
-		if (distanceToPoint(point, getPointOnCircle([400, 400], i, 150)) < 25) {
+		if (distanceToPoint(point, getPointOnCircle(CENTER, i, RADIUS)) < DOT_SIZE) {
 			return i
 		}
 	}
@@ -144,20 +164,15 @@ function updateAllAudios() {
 }
 
 function updateAudio(audio, isOn) {
+	if (isOn != audio.paused) {
+		return // no change needed
+	}
 	if (isOn) {
-		if (!audio.paused) {
-			return
-		}
 		audio.currenttime = 0;
-		
 		audio.play()
 	} else {
-		if (audio.paused) {
-			return
-		}
 		audio.pause()
 		audio.currenttime = 0;
-		
 		// clickable = false
 		// var id = setInterval(
 		// 	function() {
@@ -177,32 +192,30 @@ function updateAudio(audio, isOn) {
 	}
 }
 
-function refresh() {
-	clickAudio.currentTime = 0
-	clickAudio.play()
+function refresh(first = false) {
+	if (!first) {
+		clickAudio.currentTime = 0
+		clickAudio.play()
+	}
 	ctx.clearRect(0, 0, 1000, 1000);
 	drawChord()
-	drawColorWheel([400, 400], 1)
+	drawColorWheel()
 }
 
-function drawColorWheel(center) {
+function drawColorWheel() {
 	for (i = 0; i < TET; i++) {
 		let color = (360 * i) / TET
 		drawDot(
-			getPointOnCircle(center, i, 150), 
+			getPointOnCircle(CENTER, i, RADIUS), 
 			noteToColor(i, true),
 			displayNotes[i], 
 			noteState[i] == 1); //notes[(i+117) % notes.length]
 	}
 }
 
-function noteToColor(i, max) {
-	trueColor = false
+function noteToColor(i, max, trueColor = false) {
 	if (trueColor) {
 		let color = 360 * i / TET
-		// if (greenShift) {
-		// 	color += (i == 3 ? -15 : (i == 5 ? 15 : 0))
-		// }
 		return `hsl(${color}, 100%, 50%)`
 	} else {
 		return noteColors[i]
@@ -212,7 +225,7 @@ function noteToColor(i, max) {
 function drawDot(center, color, text, filled) {
 	ctx.lineWidth = 2
 	ctx.beginPath()
-	ctx.arc(center[0], center[1], 20, 0, 2 * Math.PI)
+	ctx.arc(center[0], center[1], DOT_SIZE, 0, 2 * Math.PI)
 	if (filled) {
 		ctx.fillStyle = color
 		ctx.fill()
@@ -220,12 +233,11 @@ function drawDot(center, color, text, filled) {
 		ctx.strokeStyle = color
 		ctx.stroke()
 	}
-	ctx.fillStyle = `black`
+	//ctx.fillStyle = `black`
 	//ctx.fillText(text, center[0]-8, center[1]+8)
 }
 
 function drawChord() {
-	let center = [400, 400]
 	let chord = []
 	for (let i = 0; i < TET; i++) {
 		if (noteState[i]) {
@@ -236,35 +248,34 @@ function drawChord() {
 	let intervalTotal = 0
 	for (i = 0; i < chord.length; i++) {
 		let n1 = chord[i]
-		p1 = getPointOnCircle(center, n1, 150)
+		p1 = getPointOnCircle(CENTER, n1, RADIUS)
 		for (let j = i + 1; j < chord.length; j++) {
 			let n2 = chord[j]
-			let p2 = getPointOnCircle(center, n2, 150)
+			let p2 = getPointOnCircle(CENTER, n2, RADIUS)
 			let interval = Math.min(
 					Math.abs(n1 - n2),
 					12 - Math.abs(n1 - n2)) % 6
 			intervalTotal += interval
 			numIntervals++
 			// intervals are measured from dissonant (0, tritone) to consonant (5, fifth)
-
 			drawLine(p1, p2, interval)
 		}
 	}
 	if (numIntervals > 0) {
-		let consonanceScore = 100.0 * (intervalTotal / (5 * numIntervals))
+		//let consonanceScore = 100.0 * (intervalTotal / (5 * numIntervals))
 		//console.log(consonanceScore + "%")
 	}
 }
 
 function drawLine(pos1, pos2, interval) {
-	ctx.lineWidth = 1.5
+	ctx.lineWidth = 3
 	if (interval == 5 || interval == 0) {
-		ctx.lineWidth = 2
+		ctx.lineWidth = 3
 	}
-	ctx.strokeStyle = `hsl(0, 100%, ${50 + interval * 10}%)`
-	// ctx.strokeStyle = `hsl(${interval * (60 / 5)}, 100%, 50%)`
-	
-	// ctx.strokeStyle = intervalColors[interval]
+	// TODO: white -> yellow -> red?
+	//ctx.strokeStyle = `hsl(0, 100%, ${50 + interval * 10}%)` // white -> red
+	//ctx.strokeStyle = `hsl(${interval * (60 / 5)}, 100%, 50%)` // yellow -> red
+	ctx.strokeStyle = intervalColors2[interval]
 	//ctx.strokeStyle = "white"
 	ctx.beginPath()
 	ctx.moveTo(pos1[0], pos1[1])
@@ -273,13 +284,16 @@ function drawLine(pos1, pos2, interval) {
 }
 
 function nextChord() {
+	ctx.fillStyle = "white"
 	ctx.font = "20px Arial";
-	ctx.fillText(Object.keys(chords)[currentChord], 10, 50);
+	//ctx.fillText(Object.keys(chords)[currentChord], 10, 50);
+	ctx.fillText("hi", 400, 400)
+	
 	chord = Object.values(chords)[currentChord]
 	setChord(chord)
 	refresh()
 	updateAllAudios()
-	currentChord = (currentChord + 1) % 14
+	currentChord = (currentChord + 1) % 13
 }
 
 function setChord(chord) {
@@ -331,9 +345,8 @@ function doubleUp() {
 
 function doubleDown() {
 	noteState.push(noteState[0])
-	noteState.splice(0, 1)
-	noteState.push(noteState[0])
-	noteState.splice(0, 1)
+	noteState.push(noteState[1])
+	noteState.splice(0, 2)
 	updateAllAudios()	
 	refresh()
 }
@@ -344,7 +357,7 @@ function flip() {
 	refresh()
 }
 
-refresh()
+refresh(true)
 
 </script>
 </body>
