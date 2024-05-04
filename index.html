@@ -2,10 +2,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Chord Wheel</title>
-	<link rel="icon">
+	<title>Chordwheel</title>
+	<link rel="icon" href='favicon.ico'>
 	<style>
-		body      { background-color: rgb(0, 0, 0); }
+		body { background-color: hsl(0, 0%, 0%); }
 	</style>
 </head>
 <body>
@@ -20,18 +20,20 @@ let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 const SPACE_CODE = 32
 const TET = 12
-const notes = ['A', 'Bb', 'B', 'C', "Cs", 'D', 'Eb','E', 'F', "Fs", 'G', 'Ab']
+const notes = ['A', 'Bflat', 'B', 'C', "Csharp", 'D', 'Eflat','E', 'F', "Fsharp", 'G', 'Aflat']
 const displayNotes = ['A', 'B♭', 'B', 'C', 'C♯', 'D', 'E♭','E', 'F', 'F♯', 'G', 'A♭']
 
-
+let clickable = true
 let currentChord = 0;
+
+// organize into meaningful 'progression', can change root
 const chords = {
-	'A':		[0, 4, 7], 		// Major
 	'Am':		[0, 3, 7],		// Minor
 	'A∫':		[0, 5, 7],		// Suspended
-	'A+':		[0, 4, 8],		// Augmented
-	'Aº':		[0, 3, 6],		// Diminished
+	'A':		[0, 4, 7], 		// Major
 	'Ab5':		[0, 4, 6],		// Flat Five
+	'Aº':		[0, 3, 6],		// Diminished
+	'A+':		[0, 4, 8],		// Augmented
 	// 4 note
 	'A7':		[0, 4, 7, 10],	// Dominant Seventh
 	'Am7':		[0, 3, 7, 10],	// Minor Seventh
@@ -52,34 +54,74 @@ let intervalColors = [
 	'yellow',	// tritone
 ]
 
+let noteColors = [
+	`hsl(0, 100%, 50%)`, // red
+	`hsl(15, 100%, 50%)`, // red-orange
+	`hsl(30, 100%, 50%)`, // orange
+	`hsl(45, 100%, 50%)`, // orange-yellow
+	`hsl(60, 100%, 50%)`, // yellow
+	`hsl(90, 100%, 50%)`, // yellow-green
+	`hsl(120, 100%, 50%)`, // green
+	`hsl(180, 100%, 50%)`, // blue-green
+	`hsl(240, 100%, 50%)`, // blue
+	`hsl(260, 100%, 50%)`, // blue-purple
+	`hsl(280, 100%, 50%)`, // purple
+	`hsl(315, 100%, 50%)`, // purple-red
+]
+
 let audios = []
 let noteState = []
+let clickAudio = new Audio()
+clickAudio.src = "click.wav"
+clickAudio.volume = .15
 
 for (let i = 0; i < TET; i++) {
 	let audio = new Audio()
 	audio.loop = true
-	audio.volume = .03
-	audio.src = "notes/" + notes[i] + "2.mp3"
+	audio.volume = .3
+	audio.src = "notes/" + notes[i] + ".mp3"
 	audios.push(audio)
 	noteState[i] = false
 }
 
 
+/////////////////////
+// CONTROL
+/////////////////////
+document.body.onkeyup = function(e) {
+	if (e.keyCode == SPACE_CODE) {
+    	nextChord()
+    } else if (e.keyCode == 37) {
+		rotateLeft()
+	} else if (e.keyCode == 39) {
+		rotateRight()
+	} else if (e.keyCode == 38) {
+		console.log("ok")
+		doubleUp()
+	} else if (e.keyCode == 40) {
+		doubleDown()
+	}
+}
+
+
 canvas.addEventListener('mousedown', function(e) {
-    getCursorPosition(canvas, e)
+    buttonClick(canvas, e)
 })
 
-function getCursorPosition(canvas, event) {
+function buttonClick(canvas, event) {
     const rect = canvas.getBoundingClientRect()
 	let note = checkClick([event.clientX - rect.left, event.clientY - rect.top])
     if (note != -1) {
 		noteState[note] = !noteState[note]
-		updateAudio(note)
+		updateAudio(audios[note], noteState[note])
 		refresh()
 	}
 }
 
 function checkClick(point) {
+	if (!clickable) {
+		return -1
+	}
 	for (let i = 0; i < TET; i++) {
 		if (distanceToPoint(point, getPointOnCircle([400, 400], i, 150)) < 25) {
 			return i
@@ -94,24 +136,50 @@ function distanceToPoint(p1, p2) {
 	return Math.sqrt(dx * dx + dy * dy);
 }
 
-////////////Sound
-
-function updateAudios() {
+//////////// Sound
+function updateAllAudios() {
 	for (let i = 0; i < TET; i++) {
-		updateAudio(i)
+		updateAudio(audios[i], noteState[i])
 	}
 }
 
-function updateAudio(i) {
-	if (noteState[i]) {
-		audios[i].currentTime = 0
-		audios[i].play()
+function updateAudio(audio, isOn) {
+	if (isOn) {
+		if (!audio.paused) {
+			return
+		}
+		audio.currenttime = 0;
+		
+		audio.play()
 	} else {
-		audios[i].pause()
+		if (audio.paused) {
+			return
+		}
+		audio.pause()
+		audio.currenttime = 0;
+		
+		// clickable = false
+		// var id = setInterval(
+		// 	function() {
+		// 		if (audio.volume == 0) {
+		// 			audio.pause()
+		// 			audio.currenttime = 0;
+		// 			audio.volume = .3;
+		// 			clearInterval(id);
+		// 			clickable = true
+		// 		} else if (audio.volume <= 0.01) {
+		// 			audio.volume = 0
+		// 		} else {
+		// 			audio.volume -= 0.01;
+		// 		}
+		// 	}, 15
+		// )
 	}
 }
 
 function refresh() {
+	clickAudio.currentTime = 0
+	clickAudio.play()
 	ctx.clearRect(0, 0, 1000, 1000);
 	drawChord()
 	drawColorWheel([400, 400], 1)
@@ -128,12 +196,17 @@ function drawColorWheel(center) {
 	}
 }
 
-function noteToColor(i, max, greenShift = false) {
-	let color = 360 * i / TET
-	if (greenShift) {
-		color += (i == 3 ? -15 : (i == 5 ? 15 : 0))
+function noteToColor(i, max) {
+	trueColor = false
+	if (trueColor) {
+		let color = 360 * i / TET
+		// if (greenShift) {
+		// 	color += (i == 3 ? -15 : (i == 5 ? 15 : 0))
+		// }
+		return `hsl(${color}, 100%, 50%)`
+	} else {
+		return noteColors[i]
 	}
-	return `hsl(${color}, 100%, 50%)`
 }
 
 function drawDot(center, color, text, filled) {
@@ -159,6 +232,8 @@ function drawChord() {
 			chord.push(i)
 		}
 	}
+	let numIntervals = 0
+	let intervalTotal = 0
 	for (i = 0; i < chord.length; i++) {
 		let n1 = chord[i]
 		p1 = getPointOnCircle(center, n1, 150)
@@ -167,17 +242,30 @@ function drawChord() {
 			let p2 = getPointOnCircle(center, n2, 150)
 			let interval = Math.min(
 					Math.abs(n1 - n2),
-					12 - Math.abs(n1 - n2),
-			) % 6
+					12 - Math.abs(n1 - n2)) % 6
+			intervalTotal += interval
+			numIntervals++
+			// intervals are measured from dissonant (0, tritone) to consonant (5, fifth)
+
 			drawLine(p1, p2, interval)
 		}
+	}
+	if (numIntervals > 0) {
+		let consonanceScore = 100.0 * (intervalTotal / (5 * numIntervals))
+		//console.log(consonanceScore + "%")
 	}
 }
 
 function drawLine(pos1, pos2, interval) {
 	ctx.lineWidth = 1.5
-	ctx.strokeStyle = intervalColors[interval]
-	// ctx.strokeStyle = "white"
+	if (interval == 5 || interval == 0) {
+		ctx.lineWidth = 2
+	}
+	ctx.strokeStyle = `hsl(0, 100%, ${50 + interval * 10}%)`
+	// ctx.strokeStyle = `hsl(${interval * (60 / 5)}, 100%, 50%)`
+	
+	// ctx.strokeStyle = intervalColors[interval]
+	//ctx.strokeStyle = "white"
 	ctx.beginPath()
 	ctx.moveTo(pos1[0], pos1[1])
 	ctx.lineTo(pos2[0], pos2[1])
@@ -190,7 +278,7 @@ function nextChord() {
 	chord = Object.values(chords)[currentChord]
 	setChord(chord)
 	refresh()
-	updateAudios()
+	updateAllAudios()
 	currentChord = (currentChord + 1) % 14
 }
 
@@ -209,15 +297,6 @@ function getPointOnCircle(center, n, radius) {
 		center[1] + Math.sin(2 * Math.PI * n / TET) * radius]
 }
 
-document.body.onkeyup = function(e) {
-	if (e.keyCode == SPACE_CODE) {
-    	nextChord()
-    } else if (e.keyCode == 37) {
-		rotateLeft()
-	} else if (e.keyCode == 39) {
-		rotateRight()
-	}
-}
 
 function getMousePos(canvas, evt) {
 	var rect = canvas.getBoundingClientRect();
@@ -230,20 +309,38 @@ function getMousePos(canvas, evt) {
 function rotateLeft() {
 	noteState.push(noteState[0])
 	noteState.splice(0, 1)
-	updateAudios()
+	updateAllAudios()
 	refresh()
 }
 
 function rotateRight() {
 	noteState.splice(0, 0, noteState[noteState.length - 1])
 	noteState.pop()
-	updateAudios()	
+	updateAllAudios()	
+	refresh()
+}
+
+function doubleUp() {
+	noteState.splice(0, 0, noteState[noteState.length - 1])
+	noteState.pop()
+	noteState.splice(0, 0, noteState[noteState.length - 1])
+	noteState.pop()
+	updateAllAudios()	
+	refresh()
+}
+
+function doubleDown() {
+	noteState.push(noteState[0])
+	noteState.splice(0, 1)
+	noteState.push(noteState[0])
+	noteState.splice(0, 1)
+	updateAllAudios()	
 	refresh()
 }
 
 function flip() {
 	noteState = noteState.reverse()
-	updateAudios()	
+	updateAllAudios()	
 	refresh()
 }
 
