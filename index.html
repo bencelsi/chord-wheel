@@ -52,22 +52,21 @@
 			</div> -->
 			<button id="rotateRightButton">Rotate ↻ (left arrow)</button><br>
 			<button id="rotateLeftButton">Rotate ⟳ (right arrow)</button><br>
-			<button id="mirrorButton">Mirror (M)</button><br>
-			<button id="clearButton">Clear (C)</button><br>
-			<button id="satanButton">Satan (S)</button><br>
+			<button id="mirrorButton">Mirror (m)</button><br>
+			<button id="clearButton">Clear (c)</button><br>
+			<button id="satanButton">Satan (s)</button><br>
 			<br><br>
 		</div>
-		<div class="option" style="width: 450px">
-			<h3>Set A Chord</h3>
+		<div class="option" style="width: 350px">
+			<h3>Set Chord</h3>
 			<div id="rootTitle">Root:</div>
-			<div>
-				<input type="range" min="0" max="11" class="slider" id="rootSlider">
-			</div>
+			<div><input type="range" min="0" max="11" class="slider" id="rootSlider"></div>
 			Chord Type:
 			<br>
 			<span id=chordButtons3></span>
 			<span id=chordButtons4></span>
 			<span id=chordButtons5></span>
+			<span id=chordButtons6></span>
 		</div>
 		<div class="option">
 			<h3>Custom Chord Progression</h3>
@@ -85,15 +84,22 @@
 				<input type="checkbox" id="showNotes" checked="false"/>
 				<label for="showNotes">Show Notes</label>
 			</div>
+			<!-- <div>
+				<input type="checkbox" id="showCurrentChord" checked="false"/>
+				<label for="showNotes">Show Current Chord</label>
+			</div>
+			<div>
+				<input type="checkbox" id="alternateChordNames" checked="false"/>
+				<label for="showNotes">Alternate Chord Names</label>
+			</div> -->
 		</div>
 		
 	</div>
 <script>
 
-
 let colorModeFifths = false
 let noteModeFifths = false
-
+let alternateChordNames = false
 
 // OPTIONS
 // Color mode: true vs fudged
@@ -152,28 +158,77 @@ let noteColors = [
 	`hsl(330, 100%, 50%)`, // purple-red
 ]
 
-const chords = {
-	//"5":   [[0, 7],				"Five"],
-	"" :   	 [[0, 4, 7], 			"Major"	],						//Jubilant
-	"m":   	 [[0, 3, 7],			"Minor"	],						//Tragic 	//-
-	"sus":   [[0, 5, 7],			"Suspended"],					
-	"º":   	 [[0, 3, 6],			"Diminished"],					
-	"+":  	 [[0, 4, 8],			"Augmented"],					
-	"b5":  	 [[0, 4, 6],			"Flat Five"],					//Stunted
-	"7":   	 [[0, 4, 7, 10],		"Dominant Seven"],				//Dominant
-	"m7":  	 [[0, 3, 7, 10],		"Minor Seven / Six"],			//Submissive
-	"∆7":  	 [[0, 4, 7, 11],		"Major Seven"],					//Placid		//maj7
-	"m6":  	 [[0, 3, 7, 9],			"Minor Sixth"],				
-	"m9":    [[0, 2, 3, 7],			"Minor Nine"],				
-	"sus7":  [[0, 5, 7, 10],		"Suspended Seven"],				//Illusory
-	"sus∆7": [[0, 5, 7, 11],		"Suspended Major Seven"],		//Ephemeral
-	"º7":  	 [[0, 3, 6, 9],			"Diminished Seventh"],			
-	"µ":     [[0, 2, 4, 7],			"Mu"],							//Thickened		//add9 //add2 //mu
-	"9":     [[0, 2, 4, 7, 10],  	"Dominant Nine"],			
-	"∆9":    [[0, 2, 4, 7, 11],  	"Major Nine"],				
-	"sus9":  [[0, 2, 5, 7, 10], 	"Suspended Nine"],			
-	"sus∆9": [[0, 2, 5, 7, 11],		"Suspended Major Nine"],		//Ephemeral
+const chords = {											// Alt name
+	//"5":   [[0, 7],				"Five"],				"Primitive"
+	"" :   	 [[0, 4, 7], 			"Major",				"Jubilant"		],				
+	"m":   	 [[0, 3, 7],			"Minor",				"Despondant"	],	
+	"sus":   [[0, 5, 7],			"Suspended",			"Neutral"		],					
+	"º":   	 [[0, 3, 6],			"Diminished",			"Contorted"		],	
+	"+":  	 [[0, 4, 8],			"Augmented",			"Extruded"		],
+	"b5":  	 [[0, 4, 6],			"Flat 5",				"Stunted"		],
+	"7":   	 [[0, 4, 7, 10],		"Dominant 7",			"Energized"		],		
+	"m7":  	 [[0, 3, 7, 10],		"Minor 7",				"Placid"		],
+	"∆7":  	 [[0, 4, 7, 11],		"Major 7",				"Serene"		],
+	"m6":  	 [[0, 3, 7, 9],			"Minor 6",				"Tragic"		],				
+	"madd9": [[0, 2, 3, 7],			"Minor Add 9",			"Pathetic"		],	
+	"m∆7":   [[0, 3, 7, 11],		"Minor Major 7",		"Intrigued"		],				
+	"sus7":  [[0, 5, 7, 10],		"Suspended 7",			"Cerebral"		],
+	"sus∆7": [[0, 5, 7, 11],		"Suspended Major 7",	"Elevated"		],
+	"º7":  	 [[0, 3, 6, 9],			"Diminished 7",			"Disfigured"	],			
+	"add9":  [[0, 2, 4, 7],			"Add 9",				"Thickened"		],
+	"9":     [[0, 2, 4, 7, 10],  	"Dominant 9",			"Galvanized"	],			
+	"∆9":    [[0, 2, 4, 7, 11],  	"Major 9",				"Transcendant"	],				
+	"sus9":  [[0, 2, 5, 7, 10], 	"Suspended 9",			"Ethereal"		],			
+	"sus∆9": [[0, 2, 5, 7, 11],		"Suspended Major 9",	"Ephemeral"		],
+	"m9":    [[0, 2, 3, 7, 10],		"Minor 9",				"Pensive"		],	
+	"m∆9":   [[0, 2, 3, 7, 11],		"Minor Major 9",		"Foreboding"	],
+	//"11":    [[0, 2, 4, 5, 7, 10],  "Dominant 11",			"Radicalized"	],	
+	//"∆11":   [[0, 2, 4, 5, 7, 11],  "Dominant Major 11",	"Meloncholic"	],	
 }
+
+
+// Augmented Diminished Suspended Dominant
+
+// Pitiful
+// Tragic
+// Disfigured
+// Conflicted
+// Contrived
+// Contorted
+// Moderate
+
+// Cerebral
+// Pensive
+// Tranquil
+// Illusory
+// Meloncholic
+
+//Vitalized
+// Neutral
+// Nostalgic
+// Elevated 
+// Dynamic
+// Extruded 
+// Embellished 
+// Embodied
+// Reflected 
+// Reflective
+// Reflexive
+// Iconic 
+// Galvanized
+// Submissive
+// Turgid
+// Strengthened
+// Radical
+// Entrenched	
+// Distended
+// Richened
+// Inflated
+// Sharpened
+// Depressed
+// Chilled
+// Extreme
+
 
 const redundantChords = {
 	"6": [0, 4, 7, 9],
@@ -181,6 +236,13 @@ const redundantChords = {
 	"m7b5": [0, 4, 7, 9]
 }
 
+const redundantNotes = {
+	"A#" : "Bb",
+	"Db" : "C#",
+	"D#" : "Eb",
+	"Gb" : "F#",
+	"G#" : "Ab"
+}
 const altChords = {
 	"maj7" : "∆7",
 	"∫": "sus",
@@ -198,7 +260,7 @@ let audios = []
 let noteState = []
 let clickAudio = new Audio()
 clickAudio.src = "click.wav"
-clickAudio.volume = .15
+clickAudio.volume = .2
 
 for (let i = 0; i < TET; i++) {
 	let audio = new Audio()
@@ -305,22 +367,25 @@ $(document).on('input', '[type="range"]',
     	$(this).css('accentColor', color)
 		$('.chordButton').css('borderColor', color)
 		$('.chordButton').css('color', color)
+		$('#rootTitle').css('color', color)
 });
 
 function findChordFromFullname(fullName) {
 	for (chord in chords) {
-		if (chords[chord][1] == fullName) {
+		if (chords[chord][alternateChordNames ? 2 : 1] == fullName) {
 			return chords[chord][0]
 		}
 	}
 }
 
-
-function setup() {
+function setupChordButtons() {
+	document.getElementById("chordButtons3").innerHTML = ""
+	document.getElementById("chordButtons4").innerHTML = ""
+	document.getElementById("chordButtons5").innerHTML = ""
 	for (chord in chords) {
 		let newButton = document.createElement("button")
 		newButton.className = "chordButton"
-		newButton.innerHTML = chords[chord][1]
+		newButton.innerHTML = chords[chord][alternateChordNames ? 2 : 1]
 		newButton.onclick = function(e) {
 			let chord = e.target.innerHTML
 			let transposedChord = transposeChord(findChordFromFullname(chord), parseInt(rootSlider.value))
@@ -331,47 +396,9 @@ function setup() {
 		document.getElementById("chordButtons" + chords[chord][0].length).appendChild(newButton)
 	}
 }
-setup()
+setupChordButtons()
 
 // TODO: clusters of 3 shade, overlap when clusters of 4
-
-// Augmented Diminished Suspended Dominant
-
-// Pitiful
-// Tragic
-// Disfigured
-// Conflicted
-// Contrived
-// Contorted
-// Pensive
-// Placid 
-// Tranquil
-// Serene
-// Illusory
-// Neutral
-// Nostalgic
-// Neutral
-// Ephemeral
-// Elevated 
-// Dynamic
-// Extruded 
-// Embellished 
-// Embodied
-// Reflected / Reflective
-// Chilled
-// Iconic 
-// Galvanized
-// Submissive
-// Turgid
-// Strengthened
-// Depressed
-// Radical
-// Entrenched	
-// Distended
-// Meloncholic
-// Richened
-// Inflated
-// Sharpened
 
 
 /////////////////////
@@ -629,6 +656,12 @@ function parseChord(chordName) {
 		chordType = chordName.substring(1)
 	}
 	let rootIndex = noteNames.indexOf(root)
+	if (rootIndex == -1) {
+		rootIndex = noteNames.indexOf(redundantNotes[root])
+	}
+	if (rootIndex == -1) {
+		throw new Error()
+	}
 	let chordNotes = chords[chordType];
 	return transposeChord(chords[chordType][0], rootIndex)
 }
