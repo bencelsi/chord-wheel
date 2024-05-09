@@ -2,19 +2,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Chordwheel</title>
+	<title>Chord Wheel</title>
 	<link rel="icon" href='favicon.ico'>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 	<style>
-		body { 
-			background-color: hsl(0, 0%, 0%); 
-			color: gray;
+		body {
+			background-image: url(stars2.gif);
+			/* background-color: hsl(0, 0%, 0%);  */
+			color: lightgray;
 			text-align: center
 		}
 		.option {
 			display: inline-block;
-			padding: 5px;
-			width: 340px;
+			width: 250px;
 			vertical-align:top
 		}
 		select {
@@ -38,33 +38,36 @@
 	<br>
 	<!-- <h3>C H O R D W H E E L</h3> -->
 	<div id="main">
-		<canvas id="canvas" width="600px" height="600px" style="margin: auto; display: block;"></canvas>
+		<canvas id="canvas" width="500px" height="500px" style="margin: auto; display: block;"></canvas>
 	</div>
 	<div id="optionsButton">
 		<h2>. . .</h2>
 	</div>
 	<div id ="options">
 		<div class="option">
-			<h3>Visuals</h3>
+			<h3>Controls</h3>
+			<!-- Rotation Amount:
 			<div>
-				<input type="checkbox" id="showNotes" checked="false"/>
-				<label for="showNotes">Show Notes</label>
-			</div>
-			<button id="colorModeButton">Color Mode: Chromatic</button><br>
-			<button id="noteModeButton">Note Mode: Chromatic</button><br>
-			<button id="intervalColorButton">Interval Colors: White/Yellow/Red</button>
+				<input type="range" min="1" max="6" class="slider" id="rotationSlider">
+			</div> -->
+			<button id="rotateRightButton">Rotate ↻ (left arrow)</button><br>
+			<button id="rotateLeftButton">Rotate ⟳ (right arrow)</button><br>
+			<button id="mirrorButton">Mirror (M)</button><br>
+			<button id="clearButton">Clear (C)</button><br>
+			<button id="satanButton">Satan (S)</button><br>
+			<br><br>
 		</div>
-		<div class="option">
-			<h3>Set Chord</h3>
+		<div class="option" style="width: 450px">
+			<h3>Set A Chord</h3>
 			<div id="rootTitle">Root:</div>
 			<div>
 				<input type="range" min="0" max="11" class="slider" id="rootSlider">
 			</div>
 			Chord Type:
 			<br>
-			<div id=chordButtons3></div>
-			<div id=chordButtons4></div>
-			<div id=chordButtons5></div>
+			<span id=chordButtons3></span>
+			<span id=chordButtons4></span>
+			<span id=chordButtons5></span>
 		</div>
 		<div class="option">
 			<h3>Custom Chord Progression</h3>
@@ -72,6 +75,18 @@
 			<br><br>
 			(once entered, cycle with spacebar)
 		</div>
+		<div class="option">
+			<h3>Visuals</h3>
+			<button id="colorModeButton">Color Mode: Chromatic</button><br>
+			<button id="noteModeButton">Note Mode: Chromatic</button><br>
+			<button id="intervalColorButton">Interval Colors: White/Red</button>
+			<br><br>
+			<div>
+				<input type="checkbox" id="showNotes" checked="false"/>
+				<label for="showNotes">Show Notes</label>
+			</div>
+		</div>
+		
 	</div>
 <script>
 
@@ -88,19 +103,20 @@ let noteModeFifths = false
 
 // TODO:
 // Shade in triangles
+// Show 
+// Checkbox for 'alternate Notes' and 'alternate chord names'
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 const DOT_SIZE = 23
 const RADIUS = 175
-const CENTER = [300, 300]
+const CENTER = [250, 250]
 const SPACE_CODE = 32
 const TET = 12
 const noteNames =    ['A', 'Bb', 'B', 'C', "C#", 'D', 'Eb','E', 'F', "F#", 'G', 'Ab']
 const displayNotes = ['A', 'B♭', 'B', 'C', 'C♯', 'D', 'E♭','E', 'F', 'F♯', 'G', 'A♭']
 const altNoteNames = ['A', 'B',  'C', 'D', 'E',  'F', 'G', 'H', 'I', 'J',  'K', 'L']
-
 let currentChord = -1;
 
 let intervalColors = [
@@ -241,9 +257,45 @@ intervalColorButton.onclick = function() {
 	refresh()
 }
 
+document.getElementById("optionsButton").onclick = function() {
+	clickAudio.play()
+	optionsHidden = !optionsHidden
+	optionsDiv.style.display = optionsHidden ? "none" : "inline-block"	
+}
+
+document.getElementById("rotateLeftButton").onclick = function() {
+	rotateLeft(1)
+}
+
+document.getElementById("rotateRightButton").onclick = function() {
+	rotateRight(1)
+}
+
+document.getElementById("mirrorButton").onclick = function() {
+	flip()
+	refresh()
+}
+
+document.getElementById("clearButton").onclick = function() {
+	applyAll(false)
+}
+
+document.getElementById("satanButton").onclick = function() {
+	applyAll(true)
+}
+
+function applyAll(value) {
+	for (i in noteState) {
+		noteState[i] = value
+	}
+	refresh()
+	updateAllAudios()
+}
+
 $("#rootSlider").value = 0
-$("#rootSlider").css('accentColor', "red")
-$('.chordButton').css('borderColor', "red")
+$("#rootSlider").css("accentColor", "red")
+$(".chordButton").css("borderColor", "red")
+$(".chordButton").css("color", "red")
 $(document).on('input', '[type="range"]',
 	function() {
 		if (showNotes) {
@@ -252,32 +304,45 @@ $(document).on('input', '[type="range"]',
 		let color = noteToColor($(this).val())
     	$(this).css('accentColor', color)
 		$('.chordButton').css('borderColor', color)
+		$('.chordButton').css('color', color)
 });
 
-for (chord in chords) {
-	let newButton = document.createElement("button")
-	newButton.className = "chordButton"
-	newButton.innerHTML = chord == "" ? "(major)" : chord
-	newButton.onclick = function(e) {
-		let chord = e.target.innerHTML == "(major)" ? "" : e.target.innerHTML
-		let transposedChord = transposeChord(chords[chord][0], parseInt(rootSlider.value))
-		setChord(transposedChord)
-		refresh()
-		updateAllAudios()
+function findChordFromFullname(fullName) {
+	for (chord in chords) {
+		if (chords[chord][1] == fullName) {
+			return chords[chord][0]
+		}
 	}
-	document.getElementById("chordButtons" + chords[chord][0].length).appendChild(newButton)
 }
 
+
+function setup() {
+	for (chord in chords) {
+		let newButton = document.createElement("button")
+		newButton.className = "chordButton"
+		newButton.innerHTML = chords[chord][1]
+		newButton.onclick = function(e) {
+			let chord = e.target.innerHTML
+			let transposedChord = transposeChord(findChordFromFullname(chord), parseInt(rootSlider.value))
+			setChord(transposedChord)
+			refresh()
+			updateAllAudios()
+		}
+		document.getElementById("chordButtons" + chords[chord][0].length).appendChild(newButton)
+	}
+}
+setup()
+
 // TODO: clusters of 3 shade, overlap when clusters of 4
+
 // Augmented Diminished Suspended Dominant
+
 // Pitiful
 // Tragic
 // Disfigured
 // Conflicted
 // Contrived
-
-// Contorted 
-
+// Contorted
 // Pensive
 // Placid 
 // Tranquil
@@ -306,6 +371,7 @@ for (chord in chords) {
 // Meloncholic
 // Richened
 // Inflated
+// Sharpened
 
 
 /////////////////////
@@ -321,6 +387,12 @@ document.body.onkeyup = function(e) {
 		rotateLeft(noteModeFifths ? 7 : 1)
 	} else if (e.keyCode == 39) {
 		rotateRight(noteModeFifths ? 7 : 1)
+	} else if (e.keyCode == 77) {
+		flip()
+	} else if (e.keyCode == 67) {
+		applyAll(false)
+	} else if (e.keyCode == 83) {
+		applyAll(true)
 	}
 }
 
@@ -428,7 +500,7 @@ function drawDot(center, color, filled, text) {
 	}
 	if (showNotes) {
 		ctx.font = "16px Arial";
-		ctx.fillStyle = filled ? "black" : "gray"
+		ctx.fillStyle = filled ? "black" : color
 		ctx.fillText(text, center[0]-5, center[1]+5)
 	}
 }
