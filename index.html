@@ -71,10 +71,6 @@
 		</div>
 		<div class="option">
 			<h3>Visuals</h3>
-			<button id="colorModeButton">Color Mode: Chromatic</button><br>
-			<button id="noteModeButton">Note Mode: Chromatic</button><br>
-			<button id="intervalColorButton">Interval Colors: White/Red</button>
-			<br><br>
 			<div>
 				<input type="checkbox" id="showNotes" checked="false"/>
 				<label for="showNotes">Show Notes</label>
@@ -83,12 +79,17 @@
 				<input type="checkbox" id="showChord" checked="false"/>
 				<label for="showChord">Show Current Chord</label>
 			</div>
+			<button id="colorModeButton">Color Mode: Chromatic</button><br>
+			<button id="noteModeButton">Note Mode: Chromatic</button><br>
+			<button id="intervalColorButton">Interval Colors: White/Red</button>
+			<br><br>
+			
 			<!-- <div>
 				<input type="checkbox" id="showCurrentChord" checked="false"/>
 				<label for="showNotes">Show Current Chord</label>
 			</div>
 			<div>
-				<input type="checkbox" id="alternateChordNames" checked="false"/>
+				<input type="checkbox" id="funChordNames" checked="false"/>
 				<label for="showNotes">Alternate Chord Names</label>
 			</div> -->
 		</div>
@@ -105,7 +106,7 @@
 
 let colorModeFifths = false
 let noteModeFifths = false
-let alternateChordNames = false
+let funChordNames = false
 
 // OPTIONS
 // Color mode: true vs fudged
@@ -288,7 +289,7 @@ function checkCurrentChord() {
 			}
 			let transposedChord = transposeChord(chords[j][0], currentChord[i]).sort()
 			if (transposedChord.toString() == currentChord.toString()) {
-				return [currentChord[i], chords[j][alternateChordNames ? 2 : 1]]
+				return [currentChord[i], chords[j][funChordNames ? 2 : 1]]
 			}
 		}
 	}
@@ -422,7 +423,7 @@ $(document).on('input', '[type="range"]',
 
 function findChordFromFullname(fullName) {
 	for (chord in chords) {
-		if (chords[chord][alternateChordNames ? 2 : 1] == fullName) {
+		if (chords[chord][funChordNames ? 2 : 1] == fullName) {
 			return chords[chord][0]
 		}
 	}
@@ -435,7 +436,7 @@ function setupChordButtons() {
 	for (chord in chords) {
 		let newButton = document.createElement("button")
 		newButton.className = "chordButton"
-		newButton.innerHTML = chords[chord][alternateChordNames ? 2 : 1]
+		newButton.innerHTML = chords[chord][funChordNames ? 2 : 1]
 		newButton.onclick = function(e) {
 			let chord = e.target.innerHTML
 			let transposedChord = transposeChord(findChordFromFullname(chord), parseInt(rootSlider.value))
