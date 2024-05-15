@@ -330,7 +330,7 @@ document.getElementById("showNotes").onclick = function() {
 	} else {
 		document.getElementById("rootTitle").innerHTML = "Root:"
 	}
-	refresh()
+	refreshVisuals()
 }
 
 let optionsHidden = true
@@ -345,14 +345,14 @@ let colorModeButton = document.getElementById("colorModeButton")
 colorModeButton.onclick = function() {
 	colorModeFifths = !colorModeFifths
 	colorModeButton.innerHTML = colorModeFifths ? "Color Mode: Fifths" : "Color Mode: Chromatic"	
-	refresh()
+	refreshVisuals()
 }
 
 let noteModeButton = document.getElementById("noteModeButton")
 noteModeButton.onclick = function() {
 	noteModeFifths = !noteModeFifths
 	noteModeButton.innerHTML = noteModeFifths ? "Note Mode: Fifths" : "Note Mode: Chromatic"
-	refresh()
+	refreshVisuals()
 }
 
 let intervalColorMode = 0
@@ -366,7 +366,7 @@ intervalColorButton.onclick = function() {
 	} else if (intervalColorMode == 2) {
 		intervalColorButton.innerHTML = "Interval Colors: White"
 	}
-	refresh()
+	refreshVisuals()
 }
 
 document.getElementById("optionsButton").onclick = function() {
@@ -385,7 +385,7 @@ document.getElementById("rotateRightButton").onclick = function() {
 
 document.getElementById("mirrorButton").onclick = function() {
 	mirror()
-	refresh()
+	refreshVisuals()
 }
 
 document.getElementById("clearButton").onclick = function() {
@@ -396,12 +396,21 @@ document.getElementById("satanButton").onclick = function() {
 	applyAll(true)
 }
 
+document.getElementById("showChord").onclick = function() {
+	if (document.getElementById("showChord").ischecked) {
+		findAndDrawChord() 
+	} else {
+		refreshVisuals()
+	}
+	
+}
+
 function applyAll(value) {
 	for (i in noteState) {
 		noteState[i] = value
 	}
-	refresh()
-	updateAllAudios()
+	refreshVisuals()
+	refreshAudio()
 }
 
 $("#rootSlider").value = 0
@@ -440,8 +449,8 @@ function setupChordButtons() {
 			let chord = e.target.innerHTML
 			let transposedChord = transposeChord(findChordFromFullname(chord), parseInt(rootSlider.value))
 			setChord(transposedChord)
-			refresh()
-			updateAllAudios()
+			refreshVisuals()
+			refreshAudio()
 		}
 		document.getElementById("chordButtons" + chords[chord][0].length).appendChild(newButton)
 	}
@@ -483,7 +492,7 @@ function buttonClick(canvas, event) {
     if (note != -1) {
 		noteState[note] = !noteState[note]
 		updateAudio(audios[note], noteState[note])
-		refresh()
+		refreshVisuals()
 	}
 }
 
@@ -503,7 +512,7 @@ function distanceToPoint(p1, p2) {
 }
 
 //////////// Sound
-function updateAllAudios() {
+function refreshAudio() {
 	for (let i = 0; i < TET; i++) {
 		updateAudio(audios[i], noteState[i])
 	}
@@ -522,7 +531,9 @@ function updateAudio(audio, isOn) {
 	}
 }
 
-function refresh(firstTime = false) {
+//////////// Visuals
+
+function refreshVisuals(firstTime = false) {
 	if (!firstTime) {
 		clickAudio.currentTime = 0
 		clickAudio.play()
@@ -530,6 +541,10 @@ function refresh(firstTime = false) {
 	ctx.clearRect(0, 0, 1000, 1000);
 	drawChord()
 	drawColorWheel()
+	findAndDrawChord()
+}
+
+function findAndDrawChord() {
 	if (document.getElementById("showChord").checked) {
 		let rootAndChord = checkCurrentChord()
 		if (rootAndChord != null) {
@@ -538,7 +553,6 @@ function refresh(firstTime = false) {
 				noteToColor(rootAndChord[0]))
 		}
 	}
-	
 }
 
 function drawColorWheel() {
@@ -615,14 +629,15 @@ function drawChord() {
 			drawLine(p1, p2, interval)
 		}
 	}
+	// Consonance Score
 	// TODO: some weight for 'variance'?
 	// if 3 notes same - 0 
 	// if 3 notes diff - 1
 
-	if (numIntervals > 0) {
+	//if (numIntervals > 0) {
 		//let consonanceScore = 100.0 * (intervalTotal / (5 * numIntervals))
 		//console.log(consonanceScore + "%")
-	}
+	//}
 }
 
 function drawLine(pos1, pos2, interval) {
@@ -637,7 +652,6 @@ function drawLine(pos1, pos2, interval) {
 	} else {
 		ctx.strokeStyle = intervalColors[intervalColorMode][interval]
 	}
-	//ctx.strokeStyle = "white"
 	ctx.beginPath()
 	ctx.moveTo(pos1[0], pos1[1])
 	ctx.lineTo(pos2[0], pos2[1])
@@ -656,21 +670,21 @@ function getMousePos(canvas, evt) {
 function rotateLeft(amount) {
 	let values = noteState.splice(0, amount)
 	noteState = noteState.concat(values)
-	updateAllAudios()
-	refresh()
+	refreshAudio()
+	refreshVisuals()
 }
 
 function rotateRight(amount) {
 	let values = noteState.splice(noteState.length - amount, noteState.length - 1)
 	noteState = values.concat(noteState)
-	updateAllAudios()	
-	refresh()
+	refreshAudio()	
+	refreshVisuals()
 }
 
 function flip() {
 	noteState = noteState.reverse()
-	updateAllAudios()
-	refresh()
+	refreshAudio()
+	refreshVisuals()
 }
 
 function mirror() {
@@ -680,8 +694,8 @@ function mirror() {
 		newNoteState[i] = noteState[TET - i]
 	}
 	noteState = newNoteState
-	updateAllAudios()
-	refresh()
+	refreshAudio()
+	refreshVisuals()
 }
 
 let chordProgression = document.getElementById("chordProgression")
@@ -694,11 +708,9 @@ function nextChord() {
 	if (currentChord >= customChords.length) {
 		currentChord = 0
 	}
-	//ctx.fillText(Object.keys(chords)[currentChord], 10, 50);
-	//ctx.fillText("hi", 400, 400)
 	setChord(customChords[currentChord])
-	refresh()
-	updateAllAudios()
+	refreshVisuals()
+	refreshAudio()
 }
 
 function parseChords(chordString) {
@@ -762,7 +774,7 @@ function setChord(chord) {
 	}
 }
 
-refresh(true)
+refreshVisuals(true)
 
 </script>
 </body>
