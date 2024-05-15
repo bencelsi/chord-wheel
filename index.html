@@ -599,7 +599,7 @@ function drawDot(center, color, filled, text) {
 		ctx.stroke()
 	}
 	if (showNotes) {
-		ctx.font = "16px Arial";
+		ctx.font = "16px Verdana";
 		ctx.fillStyle = filled ? "black" : color
 		ctx.fillText(text, center[0]-6, center[1]+5)
 	}
@@ -608,8 +608,8 @@ function drawDot(center, color, filled, text) {
 function drawChordName(name, color) {
 	ctx.fillStyle = color
 	name.length * 15
-	ctx.font = "30px Arial";
-	ctx.fillText(name, CENTER[0] - name.length * 7, 2.1 * CENTER[1])
+	ctx.font = "bold 30px Verdana";
+	ctx.fillText(name, CENTER[0] - name.length * 9, 2.1 * CENTER[1])
 }
 
 function drawChord() {
@@ -734,7 +734,6 @@ function parseChord(chordName) {
 		root = chordName[0]
 		chordType = ""
 	} else if (chordName[1] == "#" || chordName[1] == "b") {
-		console.log(chordName)
 		root = chordName.substring(0, 2)
 		chordType = chordName.substring(2)
 	} else {
