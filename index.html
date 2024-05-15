@@ -30,7 +30,7 @@
 			display: none;
 		}
 		#chordProgression {
-			width: 600px;
+			width: 750px;
 		}
 	</style>
 </head>
@@ -96,10 +96,9 @@
 		<br><br>
 		<div>
 			<h3>Custom Chord Progression</h3>
-			(once entered, cycle with spacebar)
-			<br>
 			<input id="chordProgression">
 			<br><br>
+			(once entered, cycle with spacebar)
 		</div>
 	</div>
 <script>
@@ -703,7 +702,7 @@ function nextChord() {
 }
 
 function parseChords(chordString) {
-	let splitChords = chordString.split(" ")
+	let splitChords = chordString.split(/\s+/)
 	let result = []
 	for (let i = 0; i < splitChords.length; i++) {
 		try {
@@ -723,6 +722,7 @@ function parseChord(chordName) {
 		root = chordName[0]
 		chordType = ""
 	} else if (chordName[1] == "#" || chordName[1] == "b") {
+		console.log(chordName)
 		root = chordName.substring(0, 2)
 		chordType = chordName.substring(2)
 	} else {
