@@ -83,7 +83,6 @@
 			<button id="noteModeButton">Note Mode: Chromatic</button><br>
 			<button id="intervalColorButton">Interval Colors: White/Red</button>
 			<br><br>
-			
 			<!-- <div>
 				<input type="checkbox" id="showCurrentChord" checked="false"/>
 				<label for="showNotes">Show Current Chord</label>
@@ -97,10 +96,11 @@
 		<div>
 			<h3>Custom Chord Progression</h3>
 			<input id="chordProgression">
-			<br><br>
-			(once entered, cycle with spacebar)
+			<br>
+			<button id="cycleChordButton">Cycle Chord (spacebar)</button>
 		</div>
 	</div>
+	<br><br><br><br><br>
 <script>
 
 let colorModeFifths = false
@@ -109,13 +109,13 @@ let funChordNames = false
 
 // OPTIONS
 // Color mode: true vs fudged
-
 // Left / right interval
-// Flip
+// Negative harmony
+// Select reflection axis
+// Select rotation amount
 
 // TODO:
 // Shade in triangles
-// Show Current Chord
 // Checkbox for 'alternate Notes' and 'alternate chord names'
 // Other instruments
 // Octave mode
@@ -402,8 +402,9 @@ document.getElementById("showChord").onclick = function() {
 	} else {
 		refreshVisuals()
 	}
-	
 }
+
+document.getElementById("cycleChordButton").onclick = nextChord
 
 function applyAll(value) {
 	for (i in noteState) {
@@ -458,7 +459,6 @@ function setupChordButtons() {
 setupChordButtons()
 
 // TODO: clusters of 3 shade, overlap when clusters of 4
-
 
 /////////////////////
 // CONTROL
