@@ -102,6 +102,9 @@
 	</div>
 	<br><br><br><br><br>
 <script>
+if (location.hostname === "") {
+    document.title = "." + document.title
+}
 
 let colorModeFifths = false
 let noteModeFifths = false
@@ -119,6 +122,9 @@ let funChordNames = false
 // Checkbox for 'alternate Notes' and 'alternate chord names'
 // Other instruments
 // Octave mode
+// Only color root, not chord name
+// Fix chord selection color
+// 
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
