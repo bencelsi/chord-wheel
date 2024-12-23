@@ -1,0 +1,760 @@
+<!-- Musical Circles -->
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Chord Wheel</title>
+	<link rel="icon" href='favicon.ico'>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+	<style>
+		body {
+			background-image: url(stars2.gif);
+			/* background-color: hsl(0, 0%, 0%);  */
+			color: lightgray;
+			text-align: center
+		}
+
+		.option {
+			display: inline-block;
+			width: 250px;
+			vertical-align:top
+		}
+
+		select {
+            color: red;
+			background-color: black;
+        }
+
+		button {
+			background-color: black;
+			color: white;
+			margin: 3px;
+		}
+		
+		#options { display: none; }
+		
+		#chordProgression { width: 750px; }
+	</style>
+</head>
+<body>
+	<br>
+	<h3>C H O R D W H E E L</h3>
+	<div id="main">
+		<canvas id="canvas" width="500px" height="500px" style="margin: auto; display: block;"></canvas>
+	</div>
+	<h2 id="chordName"></h2>
+	<div id="optionsButton">
+		<h2>. . .</h2>
+	</div>
+	<div id ="options">
+		<div class="option">
+			<h3>Controls</h3>
+			<!-- Rotation Amount:
+			<div>
+				<input type="range" min="1" max="6" class="slider" id="rotationSlider">
+			</div> -->
+			<button id="rotateRightButton">Rotate ↻ (right arrow)</button><br>
+			<button id="rotateLeftButton">Rotate ↺ (left arrow)</button><br>
+			<button id="mirrorButton">Mirror (m)</button><br>
+			<button id="clearButton">Clear (c)</button><br>
+			<button id="satanButton">Satan (s)</button><br>
+			<br><br>
+		</div>
+		<div class="option" style="width: 550px">
+			<h3>Set Chord</h3>
+			<div id="rootTitle">Root:</div>
+			<div><input type="range" min="0" max="11" class="slider" id="rootSlider"></div>
+			Chord Type:
+			<br>
+			<span id=chordButtons3></span>
+			<span id=chordButtons4></span>
+			<span id=chordButtons5></span>
+			<span id=chordButtons6></span>
+		</div>
+		<div class="option">
+			<h3>Visuals</h3>
+			<div>
+				<input type="checkbox" id="showNotes" checked="true"/>
+				<label for="showNotes">Show Notes</label>
+			</div>
+			<div>
+				<input type="checkbox" id="showChord" checked="true"/>
+				<label for="showChord">Show Current Chord</label>
+			</div>
+			<button id="colorModeButton">Color Mode: Chromatic</button><br>
+			<button id="noteModeButton">Note Mode: Chromatic</button><br>
+			<button id="intervalColorButton">Interval Colors: White/Yellow/Red</button>
+			<br><br>
+			<!--
+			<div>
+				<input type="checkbox" id="funChordNames" checked="false"/>
+				<label for="showNotes">Alternate Chord Names</label>
+			</div> -->
+		</div>
+		<br><br>
+		<div>
+			<h3>Custom Chord Progression</h3>
+			<input id="chordProgression">
+			<br>
+			<button id="cycleChordButton">Cycle Chord (spacebar)</button>
+		</div>
+	</div>
+	<br><br><br><br><br>
+<script>
+if (location.hostname === "") {
+    document.title = "." + document.title
+}
+
+let colorModeFifths = false
+let noteModeFifths = false
+let funChordNames = false
+
+// OPTIONS
+// Color mode: true vs fudged
+// Left / right interval
+// Negative harmony
+// Select reflection axis
+// Select rotation amount
+
+// TODO:
+// Shade in triangles
+// Checkbox for 'alternate Notes' and 'alternate chord names'
+// Other instruments
+// Octave mode
+// Only color root, not chord name
+// Fix chord selection color
+// 
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const DOT_SIZE = 23
+const RADIUS = 175
+const CENTER = [250, 225]
+const SPACE_CODE = 32
+const TET = 12
+const noteNames =    ['A', 'Bb', 'B', 'C', "C#", 'D', 'Eb','E', 'F', "F#", 'G', 'Ab']
+const displayNotes = ['A', 'B♭', 'B', 'C', 'C♯', 'D', 'E♭','E', 'F', 'F♯', 'G', 'A♭']
+const altNoteNames = ['A', 'B',  'C', 'D', 'E',  'F', 'G', 'H', 'I', 'J',  'K', 'L']
+let currentChord = -1;
+
+let intervalColors = [
+	[
+		"red", // red
+		`hsl(25, 100%, 50%)`, // orange
+		`hsl(40, 100%, 50%)`, // orange-yellow
+		`hsl(50, 100%, 50%)`, // yellow
+		`hsl(60, 100%, 75%)`, // light yellow
+		"white"
+	],[
+		'red',
+		'blue',
+		'purple',
+		'green',
+		'orange',
+		'yellow'
+	]
+]
+
+let noteColors = [
+	`hsl(0, 100%, 50%)`, // red
+	`hsl(20, 100%, 50%)`, // orange-red
+	`hsl(40, 100%, 50%)`, // orange-yellow
+	`hsl(60, 100%, 50%)`, // yellow
+	`hsl(90, 100%, 50%)`, // yellow-green
+	`hsl(135, 100%, 35%)`, // green
+	`hsl(165, 100%, 35%)`, // green-blue
+	`hsl(205, 100%, 40%)`, // blue-green
+	`hsl(240, 100%, 50%)`, // blue
+	`hsl(265, 100%, 50%)`, // blue-purple
+	`hsl(285, 100%, 50%)`, // purple
+	`hsl(330, 100%, 50%)`, // purple-red
+]
+
+const chords = {											// Alt name
+	//"5":   [[0, 7],				"Five"],				"Primitive"
+	// 3-note:
+	"" :   	 [[0, 4, 7], 			"Major",				"Jubilant"		],				
+	"m":   	 [[0, 3, 7],			"Minor",				"Despondant"	],	
+	"sus":   [[0, 5, 7],			"Suspended",			"Neutral"		],					
+	"º":   	 [[0, 3, 6],			"Diminished",			"Contorted"		],	
+	"+":  	 [[0, 4, 8],			"Augmented",			"Extruded"		],
+	"b5":  	 [[0, 4, 6],			"Flat 5",				"Stunted"		],
+	// 4-note:
+	"7":   	 [[0, 4, 7, 10],		"Dominant 7",			"Energized"		],		
+	"m7":  	 [[0, 3, 7, 10],		"Minor 7",				"Placid"		],
+	"∆7":  	 [[0, 4, 7, 11],		"Major 7",				"Serene"		],
+	"m6":  	 [[0, 3, 7, 9],			"Minor 6",				"Tragic"		],
+	"madd9": [[0, 2, 3, 7],			"Minor add 9",			"Pathetic"		],
+	"add4":  [[0, 4, 5, 7],			"add 4",				"Tranquil"		],
+	"madd4": [[0, 3, 5, 7],			"Minor add 4",			"Pensive"		],
+	"+add9": [[0, 2, 4, 8],			"Augmented add 9",		"Swollen"		],
+	"b5add9":[[0, 2, 4, 6],			"Flat 5 add 9",			"Crumpled"		],
+	"7b5":   [[0, 4, 6, 10],		"Dominant 7 flat 5",	"Distended"		],
+	"m∆7":   [[0, 3, 7, 11],		"Minor Major 7",		"Intrigued"		],				
+	"sus7":  [[0, 5, 7, 10],		"Suspended 7",			"Cerebral"		],
+	"sus∆7": [[0, 5, 7, 11],		"Suspended Major 7",	"Elevated"		],
+	"º7":  	 [[0, 3, 6, 9],			"Diminished 7",			"Disfigured"	],			
+	"add9":  [[0, 2, 4, 7],			"add 9",				"Thickened"		],
+	// 5-note:
+	"9":     [[0, 2, 4, 7, 10],  	"Dominant 9",			"Galvanized"	],			
+	"∆9":    [[0, 2, 4, 7, 11],  	"Major 9",				"Transcendant"	],				
+	"sus9":  [[0, 2, 5, 7, 10], 	"Suspended 9",			"Ethereal"		],			
+	"sus∆9": [[0, 2, 5, 7, 11],		"Suspended Major 9",	"Ephemeral"		],
+	"m9":    [[0, 2, 3, 7, 10],		"Minor 9",				"Pensive"		],	
+	"m∆9":   [[0, 2, 3, 7, 11],		"Minor Major 9",		"Foreboding"	],
+	//"11":    [[0, 2, 4, 5, 7, 10],  "Dominant 11",		"Radicalized"	],	
+	//"∆11":   [[0, 2, 4, 5, 7, 11],  "Dominant Major 11",	"Meloncholic"	],	
+}
+
+{
+// Augmented Diminished Suspended Dominant
+
+// Pitiful
+// Tragic
+// Disfigured
+// Conflicted
+// Contrived
+// Contorted
+// Moderate
+// Heightened
+// Cerebral
+// Pensive
+// Tranquil
+// Illusory
+// Meloncholic
+// Contemplative
+// Transitive
+// Transient
+// Static
+// Solemn
+// Subservient
+// Exuberant
+// Vitalized
+// Excited
+// Invigorated
+// Neutral
+// Nostalgic
+// Elevated 
+// Dynamic
+// Extruded 
+// Embellished 
+// Embodied
+// Reflected 
+// Reflective
+// Reflexive
+// Iconic 
+// Galvanized
+// Submissive
+// Turgid
+// Strengthened
+// Radical
+// Entrenched	
+// Distended
+// Richened
+// Inflated
+// Sharpened
+// Depressed
+// Chilled
+// Extreme
+// Genetic 
+// Recessive
+}
+
+const redundantChords = {
+	"6": [0, 4, 7, 9],
+	"sus2": [0, 2, 7],
+	"m7b5": [0, 4, 7, 9]
+}
+
+const redundantNotes = {
+	"A#" : "Bb",
+	"Db" : "C#",
+	"D#" : "Eb",
+	"Gb" : "F#",
+	"G#" : "Ab"
+}
+
+const altChords = {
+	"-": "m",
+	"∫": "sus",
+	"dim": "º",
+	"maj7" : "∆7",
+	"-7": "m7",
+	"dim7": "º7",
+	"sus4": "sus",
+	"add2": "add9",
+	"µ": "add9",
+	"mu": "add9"
+}
+
+function checkCurrentChord() {
+	let currentChord = noteStateToChord().sort()
+	if (currentChord.length < 3 || currentChord.length > 5) {
+		return null
+	}
+	for (i in currentChord) {
+		for (j in chords) {
+			if (chords[j][0].length != currentChord.length) {
+				continue
+			}
+			let transposedChord = transposeChord(chords[j][0], currentChord[i]).sort()
+			if (transposedChord.toString() == currentChord.toString()) {
+				return [currentChord[i], chords[j][funChordNames ? 2 : 1]]
+			}
+		}
+	}
+	return null
+}
+
+function noteStateToChord() {
+	let chord = []
+	for (let i = 0; i < TET; i++) {
+		if (noteState[i]) chord.push(i)
+	}
+	return chord
+}
+
+let audios = []
+let noteState = []
+let clickAudio = new Audio()
+let rootTitle = document.getElementById("rootTitle")
+
+clickAudio.src = "click.wav"
+clickAudio.volume = .2
+
+for (let i = 0; i < TET; i++) {
+	let audio = new Audio()
+	audio.loop = true
+	audio.volume = .3
+	audio.src = "notes/" + noteNames[i].replace("#", "x") + ".mp3"
+	audios.push(audio)
+	noteState[i] = false
+}
+
+document.getElementById("showNotes").checked = true
+document.getElementById("showChord").checked = true
+let showNotes = true
+document.getElementById("showNotes").onclick = function() {
+	showNotes = !showNotes
+	if (showNotes) rootTitle.innerHTML = "Root: " + noteNames[document.getElementById("rootSlider").value]
+	else rootTitle.innerHTML = "Root:"
+	
+	refreshVisuals()
+}
+
+let optionsHidden = true
+let optionsDiv = document.getElementById("options")
+document.getElementById("optionsButton").onclick = function() {
+	clickAudio.play()
+	optionsHidden = !optionsHidden
+	optionsDiv.style.display = optionsHidden ? "none" : "inline-block"	
+}
+
+let colorModeButton = document.getElementById("colorModeButton")
+colorModeButton.onclick = function() {
+	colorModeFifths = !colorModeFifths
+	colorModeButton.innerHTML = colorModeFifths ? "Color Mode: Fifths" : "Color Mode: Chromatic"	
+	refreshVisuals()
+}
+
+let noteModeButton = document.getElementById("noteModeButton")
+noteModeButton.onclick = function() {
+	noteModeFifths = !noteModeFifths
+	noteModeButton.innerHTML = noteModeFifths ? "Note Mode: Fifths" : "Note Mode: Chromatic"
+	refreshVisuals()
+}
+
+let intervalColorMode = 0
+let intervalColorButton = document.getElementById("intervalColorButton")
+intervalColorButton.onclick = function() {
+	intervalColorMode = (intervalColorMode + 1) % 3
+	if (intervalColorMode == 0) {
+		intervalColorButton.innerHTML = "Interval Colors: White/Yellow/Red"
+	} else if (intervalColorMode == 1) {
+		intervalColorButton.innerHTML = "Interval Colors: Rainbow"
+	} else if (intervalColorMode == 2) {
+		intervalColorButton.innerHTML = "Interval Colors: White"
+	}
+	refreshVisuals()
+}
+
+document.getElementById("optionsButton").onclick = function() {
+	clickAudio.play()
+	optionsHidden = !optionsHidden
+	optionsDiv.style.display = optionsHidden ? "none" : "inline-block"	
+}
+
+document.getElementById("rotateLeftButton").onclick = function() {
+	rotateLeft(1)
+}
+
+document.getElementById("rotateRightButton").onclick = function() {
+	rotateRight(1)
+}
+
+document.getElementById("mirrorButton").onclick = function() {
+	mirror()
+	refreshVisuals()
+}
+
+document.getElementById("clearButton").onclick = function() {
+	applyAll(false)
+}
+
+document.getElementById("satanButton").onclick = function() {
+	applyAll(true)
+}
+
+document.getElementById("showChord").onclick = function() {
+	if (document.getElementById("showChord").ischecked) findAndDrawChord() 
+	else refreshVisuals()
+}
+
+document.getElementById("cycleChordButton").onclick = nextChord
+
+function applyAll(value) {
+	for (i in noteState) noteState[i] = value
+	refreshVisuals(); refreshAudio()
+}
+
+$("#rootSlider").value = 0
+$("#rootSlider").css("accentColor", "red")
+$(".chordButton").css("borderColor", "red")
+$(".chordButton").css("color", "red")
+$(document).on('input', '[type="range"]',
+	function() {
+		if (showNotes) rootTitle.innerHTML = "Root: " + noteNames[$(this).val()]
+		let color = noteToColor($(this).val())
+    	$(this).css('accentColor', color)
+		$('.chordButton').css('borderColor', color)
+		$('.chordButton').css('color', color)
+		$('#rootTitle').css('color', color)
+});
+
+function findChordFromFullname(fullName) {
+	for (chord in chords) {
+		if (chords[chord][funChordNames ? 2 : 1] == fullName) {
+			return chords[chord][0]
+		}
+	}
+}
+
+function setupChordButtons() {
+	document.getElementById("chordButtons3").innerHTML = ""
+	document.getElementById("chordButtons4").innerHTML = ""
+	document.getElementById("chordButtons5").innerHTML = ""
+	for (chord in chords) {
+		let newButton = document.createElement("button")
+		newButton.className = "chordButton"
+		newButton.innerHTML = chords[chord][funChordNames ? 2 : 1]
+		newButton.onclick = function(e) {
+			let chord = e.target.innerHTML
+			let transposedChord = transposeChord(findChordFromFullname(chord), parseInt(rootSlider.value))
+			setChord(transposedChord)
+			refreshVisuals()
+			refreshAudio()
+		}
+		document.getElementById("chordButtons" + chords[chord][0].length).appendChild(newButton)
+	}
+}
+setupChordButtons()
+
+// TODO: clusters of 3 shade, overlap when clusters of 4
+
+/////////////////////
+// CONTROL
+/////////////////////
+document.body.onkeyup = function(e) {
+	if (document.activeElement.id == "chordProgression") return
+	if (e.keyCode == SPACE_CODE) nextChord()
+    else if (e.keyCode == 37) rotateLeft(noteModeFifths ? 7 : 1)
+	else if (e.keyCode == 39) rotateRight(noteModeFifths ? 7 : 1)
+	else if (e.keyCode == 77) mirror()
+	else if (e.keyCode == 67) applyAll(false)
+	else if (e.keyCode == 83) applyAll(true)
+}
+
+canvas.addEventListener('mousedown', function(e) {
+    buttonClick(canvas, e)
+})
+
+function buttonClick(canvas, event) {
+    const rect = canvas.getBoundingClientRect()
+	let note = checkClick([event.clientX - rect.left, event.clientY - rect.top])
+    if (note != -1) {
+		noteState[note] = !noteState[note]
+		updateAudio(audios[note], noteState[note])
+		refreshVisuals()
+	}
+}
+
+function checkClick(point) {
+	for (let i = 0; i < TET; i++) {
+		if (distanceToPoint(point, getPointOnCircle(CENTER, i % TET, RADIUS)) < DOT_SIZE) {
+			return i
+		}
+	}
+	return -1
+}
+
+function distanceToPoint(p1, p2) {
+	let dx = p1[0] - p2[0];
+	let dy = p1[1] - p2[1];
+	return Math.sqrt(dx * dx + dy * dy);
+}
+
+//////////// Sound
+function refreshAudio() {
+	for (let i = 0; i < TET; i++) {
+		updateAudio(audios[i], noteState[i])
+	}
+}
+
+function updateAudio(audio, isOn) {
+	if (isOn != audio.paused) return // no change needed
+	
+	if (isOn) {
+		audio.currenttime = 0;
+		audio.play()
+	} else {
+		audio.pause()
+		audio.currenttime = 0;
+	}
+}
+
+//////////// Visuals
+
+function refreshVisuals(firstTime = false) {
+	if (!firstTime) {
+		clickAudio.currentTime = 0
+		clickAudio.play()
+	}
+	ctx.clearRect(0, 0, 1000, 1000);
+	drawChord()
+	drawColorWheel()
+	findAndDrawChord()
+}
+
+function findAndDrawChord() {
+	if (document.getElementById("showChord").checked) {
+		let rootAndChord = checkCurrentChord()
+		if (rootAndChord != null) {
+			drawChordName(
+				showNotes ? displayNotes[rootAndChord[0]] + " " + rootAndChord[1] : rootAndChord[1], 
+				noteToColor(rootAndChord[0]))
+		}
+	}
+}
+
+function drawColorWheel() {
+	for (i = 0; i < TET; i++) {
+		let isFilled = noteState[i]
+		drawDot(
+			getPointOnCircle(CENTER, i, RADIUS), 
+			noteToColor(i),
+			isFilled,
+			displayNotes[i]); //notes[(i+117) % notes.length]
+	}
+}
+
+function getPointOnCircle(center, n, radius) {
+	if (noteModeFifths) n = (n * 7) % TET
+	n += 3
+	return [center[0] + Math.cos(2 * Math.PI * n / TET) * radius, 
+		center[1] + Math.sin(2 * Math.PI * n / TET) * radius]
+}
+
+function noteToColor(i, trueColor = false) {
+	if ((colorModeFifths && !noteModeFifths) || (!colorModeFifths && noteModeFifths)) {
+		i = (i * 7) % TET
+	}
+	if (trueColor) {
+		let color = 360 * i / TET
+		return `hsl(${color}, 100%, 50%)`
+	} else {
+		return noteColors[i]
+	}
+}
+
+function drawDot(center, color, filled, text) {
+	ctx.lineWidth = 2
+	ctx.beginPath()
+	ctx.arc(center[0], center[1], DOT_SIZE, 0, 2 * Math.PI)
+	if (filled) {
+		ctx.fillStyle = color
+		ctx.fill()
+	} else {
+		ctx.strokeStyle = color
+		ctx.stroke()
+	}
+	if (showNotes) {
+		ctx.font = "16px Verdana";
+		ctx.fillStyle = filled ? "black" : color
+		ctx.fillText(text, center[0]-6, center[1]+5)
+	}
+}
+
+function drawChordName(name, color) {
+	ctx.fillStyle = color
+	name.length * 15
+	ctx.font = "bold 30px Verdana";
+	ctx.fillText(name, CENTER[0] - name.length * 9, 2.1 * CENTER[1])
+}
+
+function drawChord() {
+	let chord = noteStateToChord()
+	let numIntervals = 0
+	let intervalTotal = 0
+	for (i = 0; i < chord.length; i++) {
+		let n1 = chord[i]
+		p1 = getPointOnCircle(CENTER, n1, RADIUS)
+		for (let j = i + 1; j < chord.length; j++) {
+			let n2 = chord[j]
+			let p2 = getPointOnCircle(CENTER, n2, RADIUS)
+			let interval = Math.min(Math.abs(n1 - n2), TET - Math.abs(n1 - n2)) % 6
+			intervalTotal += interval
+			numIntervals++
+			// intervals are measured from dissonant (0, tritone) to consonant (5, fifth)
+			drawLine(p1, p2, interval)
+		}
+	}
+	// Consonance Score
+	// TODO: some weight for 'variance'?
+	// if 3 notes same - 0 
+	// if 3 notes diff - 1
+
+	//if (numIntervals > 0) {
+		//let consonanceScore = 100.0 * (intervalTotal / (5 * numIntervals))
+		//console.log(consonanceScore + "%")
+	//}
+}
+
+function drawLine(pos1, pos2, interval) {
+	ctx.lineWidth = 3
+	if (interval == 5 || interval == 0) ctx.lineWidth = 3
+	//ctx.strokeStyle = `hsl(0, 100%, ${50 + interval * 10}%)` // white -> red
+	//ctx.strokeStyle = `hsl(${interval * (60 / 5)}, 100%, 50%)` // yellow -> red
+	if (intervalColorMode == 2) ctx.strokeStyle = "white"
+	else ctx.strokeStyle = intervalColors[intervalColorMode][interval]
+	
+	ctx.beginPath()
+	ctx.moveTo(pos1[0], pos1[1])
+	ctx.lineTo(pos2[0], pos2[1])
+	ctx.stroke()
+}
+
+function getMousePos(canvas, evt) {
+	var rect = canvas.getBoundingClientRect();
+	return {
+		x: evt.clientX - rect.left,
+		y: evt.clientY - rect.top
+	}
+}
+
+function rotateLeft(amount) {
+	let values = noteState.splice(0, amount)
+	noteState = noteState.concat(values)
+	refreshAudio()
+	refreshVisuals()
+}
+
+function rotateRight(amount) {
+	let values = noteState.splice(noteState.length - amount, noteState.length - 1)
+	noteState = values.concat(noteState)
+	refreshAudio()	
+	refreshVisuals()
+}
+
+function flip() {
+	noteState = noteState.reverse()
+	refreshAudio(); refreshVisuals()
+}
+
+function mirror() {
+	let newNoteState = []
+	newNoteState[0] = noteState[0]
+	for (let i = 1; i < TET; i++) {
+		newNoteState[i] = noteState[TET - i]
+	}
+	noteState = newNoteState
+	refreshAudio(); refreshVisuals()
+}
+
+let chordProgression = document.getElementById("chordProgression")
+function nextChord() {
+	let customChords = parseChords(chordProgression.value)
+	if (customChords.length == 0) {
+		return
+	}
+	currentChord += 1
+	if (currentChord >= customChords.length) {
+		currentChord = 0
+	}
+	setChord(customChords[currentChord])
+	refreshAudio(); refreshVisuals()
+}
+
+function parseChords(chordString) {
+	let splitChords = chordString.split(/\s+/)
+	let result = []
+	for (let i = 0; i < splitChords.length; i++) {
+		try {
+			result.push(parseChord(splitChords[i]))
+		} catch { }
+	}
+	return result
+}
+
+function parseChord(chordName) {
+	var root
+	var chordType
+	// Separate note / chord
+	if (chordName.length == 0) {
+		throw new Error()
+	} else if (chordName.length == 1) {
+		root = chordName[0]
+		chordType = ""
+	} else if (chordName[1] == "#" || chordName[1] == "b") {
+		root = chordName.substring(0, 2)
+		chordType = chordName.substring(2)
+	} else {
+		root = chordName.substring(0, 1)
+		chordType = chordName.substring(1)
+	}
+
+	// Find note
+	let rootIndex = noteNames.indexOf(root)
+	if (rootIndex == -1) {
+		rootIndex = noteNames.indexOf(redundantNotes[root])
+	}
+	if (rootIndex == -1) {
+		throw new Error()
+	}
+
+	let chordNotes = 
+		chords[chordType] != undefined ? chords[chordType][0] :
+			(redundantChords[chordType] != undefined ? redundantChords[chordType] :
+				chords[altChords[chordType]][0])
+
+	return transposeChord(chordNotes, rootIndex)
+}
+
+function transposeChord(chord, interval) {
+	let transposedChord = []
+	for (let i = 0; i < chord.length; i++) {
+		transposedChord.push((chord[i] + interval) % TET)
+	}
+	return transposedChord	
+}
+
+function setChord(chord) {
+	for (i = 0; i < TET; i++) {
+		noteState[i] = chord.includes(i) ? 1 : 0
+	}
+}
+
+refreshVisuals(true)
+
+</script>
+</body>
+</html>
