@@ -168,17 +168,17 @@ const chords = {											// Alt name
 	// 3-note:
 	//'Half step': 
 	//'Whole step': [[0, 2],		'Whole step',			'Step'
-	'i1' :[[]],
-	'i2' :[[]],
-	'i3' :[[]],
-	'i4' :[[]],
-	'i5' :[[]],
-	'i6' :[[]],
-	'i7' :[[]],
-	'i8' :[[]],
-	'i9' :[[]],
-	'i10' :[[]],
-	'i10' :[[]],
+	// 'i1' :[[]],
+	// 'i2' :[[]],
+	// 'i3' :[[]],
+	// 'i4' :[[]],
+	// 'i5' :[[]],
+	// 'i6' :[[]],
+	// 'i7' :[[]],
+	// 'i8' :[[]],
+	// 'i9' :[[]],
+	// 'i10' :[[]],
+	// 'i10' :[[]],
 	
 	'' :   	 [[0, 4, 7], 			'Major',				'Joyous'		],		// Jubilant		
 	'm':   	 [[0, 3, 7],			'Minor',				'Somber'		],		// dismal, morose, Despondant
@@ -446,6 +446,9 @@ function setupChordButtons() {
 			setChord(transposedChord)
 			refreshVisuals(); refreshAudio()
 		}
+		console.log(chords)
+		console.log(chord)
+		console.log('chordButtons' + chords[chord][0].length)
 		get('chordButtons' + chords[chord][0].length).appendChild(newButton)
 	}
 	updateChordButtonColors()
