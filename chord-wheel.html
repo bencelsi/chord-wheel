@@ -81,10 +81,10 @@
 				<input type='checkbox' id='funChords'/>
 				<label for='funChords'>Fun Chord Names</label>
 			</div>
-			<div>
+			<!-- <div>
 				<input type='checkbox' id='altNotes'/>
-				<label for='altNotes'>Alternate Note</label>
-			</div>
+				<label for='altNotes'>Alternate Notes</label>
+			</div> -->
 			<br>
 			<button id='colorModeButton'>Color Mode: Chromatic</button><br>
 			<button id='noteModeButton'>Note Mode: Chromatic</button><br>
@@ -178,7 +178,7 @@ const chords = {											// Alt name
 	// 'i8' :[[]],
 	// 'i9' :[[]],
 	// 'i10' :[[]],
-	// 'i10' :[[]], wtf
+	// 'i10' :[[]],
 	
 	'' :   	 [[0, 4, 7], 			'Major',				'Joyous'		],		// Jubilant		
 	'm':   	 [[0, 3, 7],			'Minor',				'Somber'		],		// dismal, morose, Despondant
@@ -320,7 +320,7 @@ let audios = []
 let noteState = []
 let clickAudio = new Audio()
 let rootTitle = get('rootTitle')
-let altNotes = true
+let altNotes = false
 
 clickAudio.src = 'click.wav'
 clickAudio.volume = .2
@@ -329,7 +329,7 @@ for (let i = 0; i < TET; i++) {
 	let audio = new Audio()
 	audio.loop = true
 	audio.volume = .3
-	audio.src = 'notes/' + (altNotes ? altNoteNames[i] : noteNames[i]).replace('#', 'x') + '.mp3'
+	audio.src = 'notes/' + (noteNames[i]).replace('#', 'x') + '.mp3'
 	audios.push(audio)
 	noteState[i] = false
 }
@@ -499,6 +499,7 @@ function distanceToPoint(p1, p2) {
 function refreshAudio() { for (let i = 0; i < TET; i++) updateAudio(audios[i], noteState[i]) }
 
 function updateAudio(audio, isOn) {
+	console.log(audio)
 	if (isOn != audio.paused) return // no change needed
 	if (isOn) { audio.currenttime = 0; audio.play() }
 	else { audio.pause(); audio.currenttime = 0 }
