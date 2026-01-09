@@ -12,7 +12,7 @@
 			border: gray;
 			border-width: 1px;
 			border-style: double;
-			height: 300px;
+			height: 310px;
 		}
 
 		select {
@@ -30,6 +30,10 @@
 		#optionsButton { cursor: url(cursor.png), auto }
 
 		#options { display: none; }
+
+		#setChordsOption {
+			width: 700px;
+		}
 		
 		#chordProgression { width: 750px; }
 	</style>
@@ -47,25 +51,25 @@
 	<div id ='options'>
 		<div class='option'>
 			<h3>Controls</h3>
-			<button id='rotateRightButton'>Rotate ↻ (right arrow)</button><br>
-			<button id='rotateLeftButton'>Rotate ↺ (left arrow)</button><br>
+			<button id='rotateRightButton'>Rotate Clockwise (→)</button><br>
+			<button id='rotateLeftButton'>Rotate Counterclockwise (←)</button><br><br>
 			<div id='rotationTitle'>Rotation Amount: 1</div>
-			<div><input type='range' min='1' max='6' class='slider' id='rotationSlider' onkeydown='return false'></div>
+			<div><input type='range' min='1' max='6' class='slider' id='rotationSlider' onkeydown='return false'></div><br>
 			<button id='mirrorButton'>Mirror (m)</button><br>
 			<button id='clearButton'>Clear (c)</button><br>
 			<button id='satanButton'>Satan (s)</button><br>
 			<br><br>
 		</div>
-		<div class='option' style='width: 550px'>
+		<div class='option' id='setChordsOption'>
 			<h3>Set Chord</h3>
 			<div id='rootTitle'>Root: A</div>
 			<div><input type='range' min='0' max='11' class='slider' id='rootSlider' onkeydown='return false'></div>
 			Chord Type:
 			<br>
-			Triadic: <span id=chordButtons3></span><br>
-			Quartal: <span id=chordButtons4></span><br>
-			Pental: <span id=chordButtons5></span><br>
-			Sextal: <span id=chordButtons6></span><br>
+			3-Note: <span id=chordButtons3></span><br>
+			4-Note: <span id=chordButtons4></span><br>
+			5-Note: <span id=chordButtons5></span><br>
+			6-Note: <span id=chordButtons6></span><br>
 		</div>
 		<div class='option'>
 			<h3>Visuals</h3>
@@ -87,7 +91,7 @@
 			</div> -->
 			<br>
 			<button id='colorModeButton'>Color Mode: Chromatic</button><br>
-			<button id='noteModeButton'>Note Mode: Chromatic</button><br>
+			<button id='noteModeButton'>Note Mode: Chromatic</button><br><br>
 			<button id='intervalColorButton'>Interval Colors: White/Yellow/Red</button>
 			<br><br>
 		</div>
@@ -95,7 +99,7 @@
 		<div>
 			<h3>Custom Chord Progression</h3>
 			<input id='chordProgression'>
-			<br>
+			<br><br>
 			<button id='cycleChordButton'>Cycle Chord (spacebar)</button>
 		</div>
 	</div>
@@ -207,7 +211,7 @@ const chords = {											// Alt name
 	'9':     [[0, 2, 4, 7, 10],  	'Dominant 9',			'Galvanized'	],	// Vitalized
 	'∆9':    [[0, 2, 4, 7, 11],  	'Major 9',				'Nostalgic'		],				
 	'sus∆9': [[0, 2, 5, 7, 11],		'Suspended Major 9',	'Expectant'		],
-	'm9':    [[0, 2, 3, 7, 10],		'Minor 9',				'Pensive'		],	//this chord is broken!
+	'm9':    [[0, 2, 3, 7, 10],		'Minor 9',				'Entranced'		],  //nonplussed Enraptured
 	'm∆9':   [[0, 2, 3, 7, 11],		'Minor Major 9',		'Foreboding'	],
 	// 6 note
 	'11':    [[0, 2, 4, 5, 7, 10],  'Dominant 11',			'Radicalized'	],	
@@ -336,7 +340,7 @@ for (let i = 0; i < TET; i++) {
 
 get('showNotes').checked = true
 get('showChord').checked = true
-get('funChords').checked = true
+get('funChords').checked = false
 get('showNotes').onclick = () => {
 	if (get('showNotes').checked) rootTitle.innerHTML = 'Root: ' + noteNames[rootSlider.value]
 	else rootTitle.innerHTML = 'Root:'
@@ -662,6 +666,7 @@ function nextChord() {
 	currentChord += 1
 	if (currentChord >= customChords.length) currentChord = 0
 	setChord(customChords[currentChord])
+	console.log(customChords)
 	refreshAudio(); refreshVisuals()
 }
 
